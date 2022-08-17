@@ -17,7 +17,6 @@ public class Station {
     private boolean interchange;
     private List<String> color; // list of colors intersecting at station
     private List<String> direction; //possible directions of incoming trains
-    private List<Station> adjacentStations; //adjacent Stations
 
     public Station(String name, List<String> color) {
         this.name = name;
