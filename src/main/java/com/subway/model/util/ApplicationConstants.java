@@ -26,4 +26,8 @@ public class ApplicationConstants {
     public static final String BLUE = "blue";
 
     public static final String YELLOW = "yellow";
+
+    public static final Integer STOPPAGE_TIME = 2;
+
+    public static final Integer TRANSIT_TIME = 15;
 }

@@ -1,11 +1,9 @@
 package com.subway.model.service;
 
-import com.subway.model.App;
-import com.subway.model.dto.Direction;
 import com.subway.model.dto.Station;
 import com.subway.model.util.ApplicationConstants;
 
-import java.sql.*;
+import java.sql.Time;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -105,7 +103,7 @@ public class SubwayService {
         stationListYellow.add(new Station("Don Mills", false, Arrays.asList(ApplicationConstants.PINK), Arrays.asList(ApplicationConstants.WEST)));
         stationListYellow.add(new Station("Leslie", false, Arrays.asList(ApplicationConstants.PINK), Arrays.asList(ApplicationConstants.WEST, ApplicationConstants.EAST)));
         stationListYellow.add(new Station("Bessarion", false, Arrays.asList(ApplicationConstants.PINK), Arrays.asList(ApplicationConstants.WEST, ApplicationConstants.EAST)));
-        stationListYellow.add(new Station("Bayview", false, Arrays.asList(ApplicationConstants.PINK), Arrays.asList(ApplicationConstants.WEST)));
+        stationListYellow.add(new Station("Bayview", false, Arrays.asList(ApplicationConstants.PINK), Arrays.asList(ApplicationConstants.WEST, ApplicationConstants.EAST)));
         stationListYellow.add(new Station("Sheppard-Yonge", true, Arrays.asList(ApplicationConstants.PINK, ApplicationConstants.YELLOW), Arrays.asList(ApplicationConstants.EAST, ApplicationConstants.NORTH, ApplicationConstants.SOUTH)));
         this.stationListPink = stationListPink;
     }
@@ -121,55 +119,29 @@ public class SubwayService {
         this.stationListBlue = stationListBlue;
     }
 
-    public void connectToMySQL() {
-        Connection connection = null;
-        try {
-            // below two lines are used for connectivity.
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            connection = DriverManager.getConnection(
-                    "jdbc:mysql://127.0.0.1:3306/mydb",
-                    "root", "root");
-
-            // mydb is database
-            // mydbuser is name of database
-            // mydbuser is password of database
-
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(
-                    "select * from designation");
-            int code;
-            String title;
-            while (resultSet.next()) {
-                code = resultSet.getInt("code");
-                title = resultSet.getString("title").trim();
-                System.out.println("Code : " + code
-                        + " Title : " + title);
-            }
-            resultSet.close();
-            statement.close();
-            connection.close();
-        } catch (Exception exception) {
-            System.out.println(exception);
-        }
-    }
-
-    /**
-     * method to connect two stations in between
-     *
-     * @param station1
-     * @param station2
-     */
-    public void connectStation(Station station1, Station station2) {
-
-    }
-
     /**
      * @param station
      * @param direction
-     * @param time
+     * @param stringTime
      */
-    public void arrivalTimeForNextTrain(Station station, Direction direction, Time time) {
+    public String arrivalTimeForNextTrain(Station station, String direction, String stringTime) {
 
+        List<String> scheduledTiming = trainScheduler(station);
+        Time givenTime = Time.valueOf(stringTime);
+        LocalTime givenLocalTime = givenTime.toLocalTime();
+
+        String nextTrainTime = "";
+        for (String timing : scheduledTiming) {
+
+            String[] a = timing.split(" ");
+            int actualArrivalHour = Time.valueOf(a[a.length - 1]).toLocalTime().getHour();
+            int actualArrivalMinute = Time.valueOf(a[a.length - 1]).toLocalTime().getMinute();
+            if ((actualArrivalHour >= givenLocalTime.getHour()) && (actualArrivalMinute > givenLocalTime.getMinute())) {
+                nextTrainTime = "Next Train arrives at : " + Time.valueOf(a[a.length - 1]).toLocalTime().toString();
+                break;
+            }
+        }
+        return nextTrainTime;
     }
 
 
@@ -185,9 +157,10 @@ public class SubwayService {
      *
      * @param station
      */
-    public void trainScheduler(Station station) {
+    public List<String> trainScheduler(Station station) {
 
         List<String> incomingColor = station.getColor();
+        List<String> scheduledTiming = new ArrayList<>();
 
         for (String color : incomingColor) {
             String startTimeString = "06:00:00";
@@ -196,7 +169,7 @@ public class SubwayService {
 
             List<Station> stationList = new ArrayList<>();
             switch (color) {
-                case "green": {
+                case ApplicationConstants.GREEN: {
                     stationList = stationListGreen;
                     break;
                 }
@@ -204,11 +177,11 @@ public class SubwayService {
                     stationList = stationListYellow;
                     break;
                 }
-                case "blue": {
+                case ApplicationConstants.BLUE: {
                     stationList = stationListBlue;
                     break;
                 }
-                case "pink": {
+                case ApplicationConstants.PINK: {
                     stationList = stationListPink;
                     break;
                 }
@@ -218,27 +191,25 @@ public class SubwayService {
             while (localStartTime.getHour() < 23 && localStartTime.getHour() >= 6) {
                 for (int j = 0; j < stationList.size(); j++) {
                     if (!trainArrivedAgain && stationList.get(j).getName().equals(station.getName())) {
-                        System.out.println("Arrival Time of " + color + " route train at " + station.getName() + ": " + localStartTime.toString());
+                        scheduledTiming.add("Arrival Time of " + color + " route train at " + station.getName() + " : " + localStartTime.getHour() + ":" + localStartTime.getMinute() + ":" + localStartTime.getSecond());
                     }
-                    localStartTime = localStartTime.plusMinutes(2); // 2  minutes of stoppage time at each station
+                    localStartTime = localStartTime.plusMinutes(ApplicationConstants.STOPPAGE_TIME); // 2  minutes of stoppage time at each station
                     if (j != stationList.size() - 1) {
-                        localStartTime = localStartTime.plusMinutes(15); // 15 minutes of travel time in between stations
+                        localStartTime = localStartTime.plusMinutes(ApplicationConstants.TRANSIT_TIME); // 15 minutes of travel time in between stations
                     }
                 }
                 for (int j = stationList.size() - 1; j >= 0; j--) {
                     if (stationList.get(j).getName().equals(station.getName())) {
-                        System.out.println("Arrival Time of " + color + " route train at " + station.getName() + ": " + localStartTime.toString());
+                        scheduledTiming.add("Arrival Time of " + color + " route train at " + station.getName() + " : " + localStartTime.getHour() + ":" + localStartTime.getMinute() + ":" + localStartTime.getSecond());
                         trainArrivedAgain = true;
                     }
-                    localStartTime = localStartTime.plusMinutes(2); // 2  minutes of stoppage time at each station
+                    localStartTime = localStartTime.plusMinutes(ApplicationConstants.STOPPAGE_TIME); // 2  minutes of stoppage time at each station
                     if (j != 0) {
-                        localStartTime = localStartTime.plusMinutes(15); // 15 minutes of travel time in between stations
+                        localStartTime = localStartTime.plusMinutes(ApplicationConstants.TRANSIT_TIME); // 15 minutes of travel time in between stations
                     }
                 }
             }
-
         }
+        return scheduledTiming;
     }
-
-
 }

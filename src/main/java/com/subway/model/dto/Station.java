@@ -16,7 +16,7 @@ public class Station {
     private String name;
     private boolean interchange;
     private List<String> color; // list of colors intersecting at station
-    private List<String> incomingDirection; //possible directions of incoming trains
+    private List<String> direction; //possible directions of incoming trains
     private List<Station> adjacentStations; //adjacent Stations
 
     public Station(String name, List<String> color) {
@@ -24,19 +24,19 @@ public class Station {
         this.color = color;
     }
 
-    public Station(String name, boolean interchange, List<String> color, List<String> incomingDirection) {
+    public Station(String name, boolean interchange, List<String> color, List<String> direction) {
         this.name = name;
         this.interchange = interchange;
         this.color = color;
-        this.incomingDirection = incomingDirection;
+        this.direction = direction;
     }
 
-    public List<String> getIncomingDirection() {
-        return incomingDirection;
+    public List<String> getDirection() {
+        return direction;
     }
 
-    public void setIncomingDirection(List<String> incomingDirection) {
-        this.incomingDirection = incomingDirection;
+    public void setDirection(List<String> direction) {
+        this.direction = direction;
     }
 
     public List<String> getColor() {
@@ -51,12 +51,12 @@ public class Station {
         return name;
     }
 
-    public boolean isInterchange() {
-        return interchange;
-    }
-
     public void setName(String name) {
         this.name = name;
+    }
+
+    public boolean isInterchange() {
+        return interchange;
     }
 
     public void setInterchange(boolean interchange) {
